@@ -31,7 +31,7 @@ function render() {
       tilesEl.appendChild(tileEl);
     }
 
-    tileEl.className = `tile field-cell field-cell--${tile.value}`;
+    tileEl.className = `tile tile--${tile.value} field-cell--${tile.value}`;
 
     if (tile.isNew) {
       tileEl.classList.add('is-new');
