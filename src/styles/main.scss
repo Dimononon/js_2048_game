@@ -75,10 +75,89 @@ body {
   }
 }
 
+.game-field-wrapper {
+  position: relative;
+}
+
 .game-field {
   background: #bbada0;
   border-spacing: 10px;
   border-radius: 5px;
+}
+
+.tiles-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translate(
+    calc(10px + var(--c) * 85px),
+    calc(10px + var(--r) * 85px)
+  );
+  transition: transform 0.15s ease-in-out;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes appear {
+  0% {
+    opacity: 0;
+    transform: translate(
+        calc(10px + var(--c) * 85px),
+        calc(10px + var(--r) * 85px)
+      )
+      scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(
+        calc(10px + var(--c) * 85px),
+        calc(10px + var(--r) * 85px)
+      )
+      scale(1);
+  }
+}
+
+.tile.is-new {
+  animation: appear 0.15s ease-in-out 0.15s backwards;
+}
+
+@keyframes pop {
+  0% {
+    transform: translate(
+        calc(10px + var(--c) * 85px),
+        calc(10px + var(--r) * 85px)
+      )
+      scale(1);
+  }
+  50% {
+    transform: translate(
+        calc(10px + var(--c) * 85px),
+        calc(10px + var(--r) * 85px)
+      )
+      scale(1.2);
+  }
+  100% {
+    transform: translate(
+        calc(10px + var(--c) * 85px),
+        calc(10px + var(--r) * 85px)
+      )
+      scale(1);
+  }
+}
+
+.tile.is-merged {
+  animation: pop 0.15s ease-in-out 0.15s backwards;
 }
 
 .game-header {

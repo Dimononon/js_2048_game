@@ -5,7 +5,6 @@ const game = new Game();
 
 const startButton = document.querySelector('.button.start');
 const scoreEl = document.querySelector('.game-score');
-const cellsEl = document.querySelectorAll('.field-cell');
 const msgStart = document.querySelector('.message-start');
 const msgWin = document.querySelector('.message-win');
 const msgLose = document.querySelector('.message-lose');
@@ -14,28 +13,51 @@ let started = false;
 let firstMoveDone = false;
 
 function render() {
-  const state = game.getState();
   const gameStatus = game.getStatus();
   const score = game.getScore();
 
   scoreEl.textContent = score;
 
-  let cellIndex = 0;
+  const tilesEl = document.querySelector('.tiles-container');
+  const renderedTiles = Array.from(tilesEl.children);
+  const activeTiles = game.getTiles();
 
-  for (let r = 0; r < 4; r++) {
-    for (let c = 0; c < 4; c++) {
-      const cellValue = state[r][c];
-      const cellEl = cellsEl[cellIndex++];
+  activeTiles.forEach((tile) => {
+    let tileEl = document.getElementById(`tile-${tile.id}`);
 
-      cellEl.className = 'field-cell';
-      cellEl.textContent = '';
-
-      if (cellValue !== 0) {
-        cellEl.classList.add(`field-cell--${cellValue}`);
-        cellEl.textContent = cellValue;
-      }
+    if (!tileEl) {
+      tileEl = document.createElement('div');
+      tileEl.id = `tile-${tile.id}`;
+      tilesEl.appendChild(tileEl);
     }
-  }
+
+    tileEl.className = `tile field-cell field-cell--${tile.value}`;
+
+    if (tile.isNew) {
+      tileEl.classList.add('is-new');
+    } else {
+      tileEl.classList.remove('is-new');
+    }
+
+    if (tile.isMerged) {
+      tileEl.classList.add('is-merged');
+    } else {
+      tileEl.classList.remove('is-merged');
+    }
+
+    tileEl.textContent = tile.value;
+
+    tileEl.style.setProperty('--r', tile.r);
+    tileEl.style.setProperty('--c', tile.c);
+  });
+
+  const activeIds = new Set(activeTiles.map((t) => `tile-${t.id}`));
+
+  renderedTiles.forEach((el) => {
+    if (!activeIds.has(el.id)) {
+      el.remove();
+    }
+  });
 
   if (gameStatus === 'playing') {
     msgStart.classList.add('hidden');
@@ -80,19 +102,19 @@ document.addEventListener('keydown', (e) => {
 
   const oldState = JSON.stringify(game.getState());
 
-  if (e.key === 'ArrowUp') {
+  if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') {
     game.moveUp();
   }
 
-  if (e.key === 'ArrowDown') {
+  if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's') {
     game.moveDown();
   }
 
-  if (e.key === 'ArrowLeft') {
+  if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') {
     game.moveLeft();
   }
 
-  if (e.key === 'ArrowRight') {
+  if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') {
     game.moveRight();
   }
 

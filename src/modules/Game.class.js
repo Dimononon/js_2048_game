@@ -12,7 +12,33 @@ class Game {
     this.initialState = initialState
       ? initialState.map((row) => [...row])
       : defaultState;
-    this.state = this.initialState.map((row) => [...row]);
+
+    this.nextId = 1;
+    this.tiles = [];
+
+    this.state = [
+      [null, null, null, null],
+      [null, null, null, null],
+      [null, null, null, null],
+      [null, null, null, null],
+    ];
+
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        if (this.initialState[r][c] !== 0) {
+          const tile = {
+            id: this.nextId++,
+            value: this.initialState[r][c],
+            r,
+            c,
+          };
+
+          this.state[r][c] = tile;
+          this.tiles.push(tile);
+        }
+      }
+    }
+
     this.score = 0;
     this.status = 'idle';
   }
@@ -21,8 +47,29 @@ class Game {
     return this.score;
   }
 
+  getTiles() {
+    return this.tiles;
+  }
+
   getState() {
-    return this.state;
+    const arr = [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ];
+
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        const tile = this.state[r][c];
+
+        if (tile) {
+          arr[r][c] = tile.value;
+        }
+      }
+    }
+
+    return arr;
   }
 
   getStatus() {
@@ -37,7 +84,32 @@ class Game {
   }
 
   restart() {
-    this.state = this.initialState.map((row) => [...row]);
+    this.nextId = 1;
+    this.tiles = [];
+
+    this.state = [
+      [null, null, null, null],
+      [null, null, null, null],
+      [null, null, null, null],
+      [null, null, null, null],
+    ];
+
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        if (this.initialState[r][c] !== 0) {
+          const tile = {
+            id: this.nextId++,
+            value: this.initialState[r][c],
+            r,
+            c,
+          };
+
+          this.state[r][c] = tile;
+          this.tiles.push(tile);
+        }
+      }
+    }
+
     this.score = 0;
     this.status = 'idle';
   }
@@ -47,7 +119,7 @@ class Game {
 
     for (let r = 0; r < 4; r++) {
       for (let c = 0; c < 4; c++) {
-        if (this.state[r][c] === 0) {
+        if (!this.state[r][c]) {
           emptyCells.push({ r, c });
         }
       }
@@ -57,7 +129,16 @@ class Game {
       const { r, c } =
         emptyCells[Math.floor(Math.random() * emptyCells.length)];
 
-      this.state[r][c] = Math.random() < 0.9 ? 2 : 4;
+      const tile = {
+        id: this.nextId++,
+        value: Math.random() < 0.9 ? 2 : 4,
+        r,
+        c,
+        isNew: true,
+      };
+
+      this.state[r][c] = tile;
+      this.tiles.push(tile);
     }
   }
 
@@ -66,21 +147,23 @@ class Game {
     let hasEmpty = false;
     let hasMoves = false;
 
+    const arr = this.getState();
+
     for (let r = 0; r < 4; r++) {
       for (let c = 0; c < 4; c++) {
-        if (this.state[r][c] >= 2048) {
+        if (arr[r][c] >= 2048) {
           has2048 = true;
         }
 
-        if (this.state[r][c] === 0) {
+        if (arr[r][c] === 0) {
           hasEmpty = true;
         }
 
-        if (c < 3 && this.state[r][c] === this.state[r][c + 1]) {
+        if (c < 3 && arr[r][c] === arr[r][c + 1]) {
           hasMoves = true;
         }
 
-        if (r < 3 && this.state[r][c] === this.state[r + 1][c]) {
+        if (r < 3 && arr[r][c] === arr[r + 1][c]) {
           hasMoves = true;
         }
       }
@@ -98,85 +181,78 @@ class Game {
       return;
     }
 
+    this.tiles.forEach((t) => {
+      t.isNew = false;
+      t.isMerged = false;
+    });
+
     let moved = false;
     let addedScore = 0;
 
-    if (direction === 'left' || direction === 'right') {
-      for (let r = 0; r < 4; r++) {
-        const row = [];
+    for (let i = 0; i < 4; i++) {
+      const lineTiles = [];
 
-        for (let c = 0; c < 4; c++) {
-          const currC = direction === 'left' ? c : 3 - c;
-
-          if (this.state[r][currC] !== 0) {
-            row.push(this.state[r][currC]);
-          }
+      const getCoords = (lineIndex, cellIndex) => {
+        switch (direction) {
+          case 'left':
+            return { r: lineIndex, c: cellIndex };
+          case 'right':
+            return { r: lineIndex, c: 3 - cellIndex };
+          case 'up':
+            return { r: cellIndex, c: lineIndex };
+          case 'down':
+            return { r: 3 - cellIndex, c: lineIndex };
+          default:
+            return { r: 0, c: 0 };
         }
+      };
 
-        const newRow = [];
-        let i = 0;
+      for (let j = 0; j < 4; j++) {
+        const { r, c } = getCoords(i, j);
 
-        while (i < row.length) {
-          if (i + 1 < row.length && row[i] === row[i + 1]) {
-            newRow.push(row[i] * 2);
-            addedScore += row[i] * 2;
-            i += 2;
-          } else {
-            newRow.push(row[i]);
-            i++;
-          }
-        }
-
-        while (newRow.length < 4) {
-          newRow.push(0);
-        }
-
-        for (let c = 0; c < 4; c++) {
-          const currC = direction === 'left' ? c : 3 - c;
-
-          if (this.state[r][currC] !== newRow[c]) {
-            moved = true;
-            this.state[r][currC] = newRow[c];
-          }
+        if (this.state[r][c] !== null) {
+          lineTiles.push(this.state[r][c]);
         }
       }
-    } else {
-      for (let c = 0; c < 4; c++) {
-        const col = [];
 
-        for (let r = 0; r < 4; r++) {
-          const currR = direction === 'up' ? r : 3 - r;
+      const newLine = [];
+      let k = 0;
 
-          if (this.state[currR][c] !== 0) {
-            col.push(this.state[currR][c]);
-          }
+      while (k < lineTiles.length) {
+        if (
+          k + 1 < lineTiles.length &&
+          lineTiles[k].value === lineTiles[k + 1].value
+        ) {
+          lineTiles[k].value *= 2;
+          lineTiles[k].isMerged = true;
+          this.tiles = this.tiles.filter((t) => t !== lineTiles[k + 1]);
+          newLine.push(lineTiles[k]);
+          addedScore += lineTiles[k].value;
+          k += 2;
+        } else {
+          newLine.push(lineTiles[k]);
+          k++;
+        }
+      }
+
+      while (newLine.length < 4) {
+        newLine.push(null);
+      }
+
+      for (let j = 0; j < 4; j++) {
+        const { r, c } = getCoords(i, j);
+
+        const item = newLine[j];
+
+        if (this.state[r][c] !== item) {
+          moved = true;
         }
 
-        const newCol = [];
-        let i = 0;
+        this.state[r][c] = item;
 
-        while (i < col.length) {
-          if (i + 1 < col.length && col[i] === col[i + 1]) {
-            newCol.push(col[i] * 2);
-            addedScore += col[i] * 2;
-            i += 2;
-          } else {
-            newCol.push(col[i]);
-            i++;
-          }
-        }
-
-        while (newCol.length < 4) {
-          newCol.push(0);
-        }
-
-        for (let r = 0; r < 4; r++) {
-          const currR = direction === 'up' ? r : 3 - r;
-
-          if (this.state[currR][c] !== newCol[r]) {
-            moved = true;
-            this.state[currR][c] = newCol[r];
-          }
+        if (item) {
+          item.r = r;
+          item.c = c;
         }
       }
     }
